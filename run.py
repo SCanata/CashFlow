@@ -75,7 +75,8 @@ def main():
             print(log)
         for p in players:
             print(
-                f"{p.name}: cash=${p.cash}, pos={p.position}, assets={fmt_assets(p)}, liabilities={fmt_liabs(p)}"
+                f"{p.name}: cash=${p.cash}, pos={p.position}, "
+                f"assets={fmt_assets(p)}, liabilities={fmt_liabs(p)}"
             )
         round_counter += 1
         time.sleep(args.delay)

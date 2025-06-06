@@ -4,8 +4,12 @@ This repository contains a very small Python implementation of a game engine
 for a board-game clone inspired by Robert Kiyosaki's **Cashflow**.
 
 The engine is located in the `cashflow` package. A simple command-line runner
+ftig7o-codex/create-game-engine-for-cashflow-clone
 is provided in `run.py` to demonstrate gameplay. The default board now contains
 48 spaces to better mirror the layout of the physical game.
+=======
+is provided in `run.py` to demonstrate gameplay.
+main
 
 ## Installation
 
@@ -28,6 +32,7 @@ python run.py
 This will simulate turns for two sample players until one reaches
 $50,000 in cash.
 
+ftig7o-codex/create-game-engine-for-cashflow-clone
 During play, landing on certain spaces draws from card decks that represent
 deals, doodads, and market events. Deal cards may add new assets if you can
 afford the purchase, doodad cards trigger immediate expenses, and market cards
@@ -69,6 +74,8 @@ During play the script prints a log message for every turn showing the dice
 roll, new position and space type before displaying each player's updated cash
 and assets.
 
+=======
+main
 ## Running Tests
 
 The project uses `pytest` for its test suite. Execute the tests from the
@@ -77,6 +84,7 @@ repository root:
 ```bash
 pytest
 ```
+ftig7o-codex/create-game-engine-for-cashflow-clone
 
 ## Contributing
 
@@ -86,3 +94,5 @@ Install development dependencies and run the tests before submitting changes:
 pip install -e .[dev]
 pytest
 ```
+=======
+Main

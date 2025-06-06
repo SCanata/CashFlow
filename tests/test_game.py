@@ -1,5 +1,10 @@
+import os
+import sys
 import random
 import pytest
+
+# Ensure the project root is on sys.path so that cashflow can be imported
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from cashflow.engine import (
     Game,
@@ -21,6 +26,7 @@ def test_default_board_setup():
     board = Board()
     assert board.space_count() == 48
 
+
 def test_play_round_updates_state():
     players = [
         Player(name="Alice", cash=1000, income=1000, expenses=800),
@@ -33,6 +39,7 @@ def test_play_round_updates_state():
     assert players[1].position == 1
     assert players[0].cash == 1000
     assert players[1].cash == 1000
+
 
 def test_winning_condition():
     players = [
@@ -94,6 +101,10 @@ def test_pay_off_liability():
     board = Board([Space(0, SpaceType.PAYCHECK)])
     game = Game([player], board)
     game.move_player(player, 1)
+    # net_cashflow = income + asset_income - (expenses + liability_expense)
+    # Here income = 0, no assets, expenses = 0, liability_expense = 50
+    # During PAYCHECK, player.cash += net_cashflow (0 - 50 = -50) => cash = 950
+    # Then pay_off_liability pops that liability for 300 => cash = 650
     assert player.cash == 650
     assert not player.liabilities
 
@@ -110,10 +121,12 @@ def test_charity_grants_extra_dice():
     board = Board([Space(0, SpaceType.CHARITY), Space(1, SpaceType.PAYCHECK)])
     game = Game([player], board)
     game.random.seed(0)
-    game.next_turn()  # land on charity
+    # First turn: land on CHARITY
+    msg = game.next_turn()
     assert player.cash == 900
     assert player.extra_dice_turns == 3
-    game.next_turn()  # should roll two dice (4 + 1 = 5)
+    # Second turn: should roll two dice (seeded to 4 + 1 = 5)
+    game.next_turn()
     assert player.position == 1
     assert player.extra_dice_turns == 2
 
@@ -123,13 +136,16 @@ def test_downsized_skips_turns():
     board = Board([Space(0, SpaceType.DOWNSIZED), Space(1, SpaceType.PAYCHECK)])
     game = Game([player], board)
     game.random.seed(0)
-    game.next_turn()  # land on downsized
+    # First turn: land on DOWNSIZED
+    game.next_turn()
+    # downsized: cash -= expenses*2 => 1000 - 1000 = 0
     assert player.cash == 0
     assert player.skip_turns == 2
-    game.next_turn()  # skipped turn
+    # Next two turns should be skipped
+    game.next_turn()
     assert player.position == 0
     assert player.skip_turns == 1
-    game.next_turn()  # skipped turn
+    game.next_turn()
     assert player.position == 0
     assert player.skip_turns == 0
 
@@ -143,12 +159,14 @@ def test_scoreboard_records_wins(tmp_path):
     reloaded = ScoreBoard(str(sb_path))
     assert reloaded.scores == {"Alice": 2, "Bob": 1}
 
+
 def test_scoreboard_str(tmp_path):
     path = tmp_path / "scores.json"
     sb = ScoreBoard(str(path))
     sb.record_win("Alice")
     sb.record_win("Bob")
     sb.record_win("Alice")
+    # Scores should be sorted by key for deterministic string
     assert str(sb) == "Alice: 2, Bob: 1"
 
 

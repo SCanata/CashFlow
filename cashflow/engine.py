@@ -62,12 +62,12 @@ class MarketCard:
 
 class Deck:
     """Simple deck that returns a random card when drawn."""
-
     def __init__(self, cards: List):
         self.cards = list(cards)
 
     def draw(self, rng: random.Random):
         return rng.choice(self.cards)
+
 
 @dataclass
 class Player:
@@ -110,12 +110,8 @@ class Board:
 
     @staticmethod
     def _default_board() -> List[Space]:
-        # The real Cashflow board contains many more spaces than the minimal
-        # prototype, so here we expand the default layout to 48 spaces.  This
-        # list loosely mirrors the distribution of special spaces found on the
-        # actual board, providing a mix of paychecks, deals and random events.
-
-        base_layout = [
+        # This minimal prototype board has 48 spaces, mixing paychecks, deals, doodads, markets, etc.
+        return [
             Space(0, SpaceType.PAYCHECK),
             Space(1, SpaceType.DEAL),
             Space(2, SpaceType.DOODAD),
@@ -165,9 +161,6 @@ class Board:
             Space(46, SpaceType.MARKET),
             Space(47, SpaceType.DOODAD),
         ]
-
-        layout = base_layout
-        return layout
 
     def space_count(self) -> int:
         return len(self.spaces)
@@ -233,10 +226,7 @@ class Game:
         return self.random.randint(1, self.die_sides)
 
     def move_player(self, player: Player, steps: int) -> Space:
-        """Move ``player`` forward ``steps`` spaces and handle the landing space.
-
-        Returns the ``Space`` landed on so callers can report what happened.
-        """
+        """Move player forward `steps` spaces and handle the landing space."""
         player.position = (player.position + steps) % self.board.space_count()
         space = self.board.spaces[player.position]
         self.handle_space(player, space)
@@ -246,16 +236,19 @@ class Game:
         if space.type == SpaceType.PAYCHECK:
             player.cash += player.net_cashflow()
             if player.liabilities:
-                # attempt to pay off the first liability if affordable
+                # Attempt to pay off the first liability if affordable
                 player.pay_off_liability(0)
+
         elif space.type == SpaceType.DOODAD:
             card = self.doodad_deck.draw(self.random)
             player.cash -= card.expense
+
         elif space.type == SpaceType.DEAL:
             card = self.deal_deck.draw(self.random)
             if player.cash >= card.cost:
                 player.cash -= card.cost
                 player.assets.append(Asset(card.name, card.income))
+
         elif space.type == SpaceType.MARKET:
             card = self.market_deck.draw(self.random)
             if card.effect == "lose_asset":
@@ -266,15 +259,19 @@ class Game:
             elif card.effect == "liability":
                 payoff = card.expense * 10
                 player.liabilities.append(Liability(card.name, card.expense, payoff))
+
         elif space.type == SpaceType.CHARITY:
             donation = min(100, player.cash)
             player.cash -= donation
             player.extra_dice_turns = 3
+
         elif space.type == SpaceType.DOWNSIZED:
             player.cash -= player.expenses * 2
             player.skip_turns = 2
+
         elif space.type == SpaceType.BABY:
             player.liabilities.append(Liability("Baby", 50, payoff=500))
+
         elif space.type == SpaceType.OPPORTUNITY:
             card = self.big_deal_deck.draw(self.random)
             if player.cash >= card.cost:
@@ -282,11 +279,7 @@ class Game:
                 player.assets.append(Asset(card.name, card.income))
 
     def next_turn(self) -> str:
-        """Advance the game by one turn for the current player.
-
-        Returns a short string describing the action taken so a caller can
-        display it in a user interface.
-        """
+        """Advance the game by one turn for the current player."""
         player = self.players[self.current_player_idx]
         description = ""
         if player.skip_turns > 0:
@@ -294,10 +287,10 @@ class Game:
             description = f"{player.name} is downsized and must skip a turn."
         else:
             steps = self.roll_die(player)
-            start = player.position
+            start_pos = player.position
             space = self.move_player(player, steps)
             description = (
-                f"{player.name} rolled {steps} moving from {start} to "
+                f"{player.name} rolled {steps}, moving from {start_pos} to "
                 f"{player.position} ({space.type.name})."
             )
         self.current_player_idx = (self.current_player_idx + 1) % len(self.players)
@@ -315,4 +308,3 @@ class Game:
         for _ in range(len(self.players)):
             logs.append(self.next_turn())
         return logs
-
